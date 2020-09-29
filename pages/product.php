@@ -1,26 +1,15 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-function read_json_file($json_path) {
-    return json_decode(file_get_contents($json_path), true);
-     } 
-if (isset($_GET['id'])) {
-    $current_product_id = (int) $_GET['id'];
-} else {
-    die('Сторінка не знайдена');
-}
-$products = read_json_file('./main.json');
-$categories = read_json_file('./categories.json');
-$current_product_index = array_search($current_product_id, array_column($products, 'id'));
-if ($current_product_index !== false) {
-    $current_product = $products[$current_product_index];
-} else {
-    $current_product = NULL;
-}
+require_once('../overrides.php');
+require_once('../functions.php');
+$products = read_json_file('../database/products.json');
+$categories = read_json_file('../database/categories.json');
+$current_product_id = parse_resource_id($_GET, 'id');
+$current_product = find_by_id($current_product_id, $products);
+$categorie_products = get_category_products($current_product['category_id'], $products);
+$next_product = get_next_product($categorie_products, $current_product_id);
+$previous_product = get_previous_product($categorie_products, $current_product_id);
 // $comments_write = json_encode(file_put_contents($comments));
-$comments = read_json_file('./comments.json');
+$comments = read_json_file('../database/comments.json');
 $errors = [];
 if (isset($_POST['comment-submit'])) {
     if (empty($_POST['comment'])) {
@@ -40,7 +29,7 @@ if (isset($_POST['comment-submit'])) {
             "product_id" => $current_product_id
         ];
         $comments[] = $comments_array;
-        file_put_contents('./comments.json', json_encode($comments));
+        file_put_contents('../database/comments.json', json_encode($comments));
     }
 }
 $comments_to_display = [];
@@ -65,7 +54,12 @@ foreach ($comments as $comment) {
 </head>
 
 <body>
+    
+    <a href="/pages/product.php?id=<?=$previous_product['id']?>">Previous</a>
+    <a href="/pages/product.php?id=<?=$next_product['id']?>">Next</a>
+
     <caption>Сумна вівця</caption>
+
     <table>
         <?php
         if ($current_product !== NULL) { ?>
@@ -79,7 +73,7 @@ foreach ($comments as $comment) {
                 ?>
                     <tr>
                         <td>
-                            <p><img src="<?= $product['photo'] ?>" width="500" height="500"></p>
+                            <p><img src="/resourcses/images/<?= $product['photo'] ?>" width="500" height="500"></p>
                         </td>
                         <td width="50" height="50">
                             <p><?= $product['description'] ?></p>
@@ -104,7 +98,7 @@ foreach ($comments as $comment) {
                 </li>
                 <li style="display: inline">
                     <label for="email">e-mail</label>
-                    <input type="text" name="email" id="email" value="" size="10" tabindex="1">
+                    <input type="text" name="email" id="email" value="" size="10" tabindex="1" required>
                 </li>
             </ul>
         </div>
@@ -118,7 +112,7 @@ foreach ($comments as $comment) {
     <ul>
         <?php foreach ($errors as $error_text) { ?>
             <li><?= $error_text ?></li>
-            <?php } ?>
+        <?php } ?>
     </ul>
 </div>
 <!--Блок відображення-->

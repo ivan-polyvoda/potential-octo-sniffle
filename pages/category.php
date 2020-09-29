@@ -1,23 +1,12 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-if (isset($_GET['id'])) {
-    $current_category_id = (int) $_GET['id'];
-} else {
-    die('Сторінка не знайдена');
-}
-
-$products = json_decode(file_get_contents('./main.json'), true);
-$categories = json_decode(file_get_contents('./categories.json'), true);
-$current_category_index =  array_search($current_category_id, array_column($categories, 'id'));
+require_once ('../overrides.php');
+require_once ('../functions.php');
+$products = read_json_file('../database/products.json');
+$categories = read_json_file('../database/categories.json');
+$current_category_id = parse_resource_id($_GET, "id");
 // var_dump($current_category_index);
-if ($current_category_index !== false) {
-    $current_category = $categories[$current_category_index];
-} else {
-    $current_category = NULL;
-}
+$current_category = find_by_id($current_category_id, $categories);
+
 // echo "<pre>";
 // print_r($current_category);
 // echo "</pre>";
@@ -47,9 +36,9 @@ if ($current_category_index !== false) {
                     }
                 ?>
                     <tr>
-                        <td><a href="/product.php?id=<?= $product['id'] ?>"><?= $product['name'] ?> </a></td>
+                        <td><a href="/pages/product.php?id=<?= $product['id'] ?>"><?= $product['name'] ?> </a></td>
                         <td><?= $product['price'] ?></td>
-                        <td><img src="<?= $product['photo'] ?>" ? width="100" height="100"></td>
+                        <td><img src="/resourcses/images/<?= $product['photo'] ?>" ? width="100" height="100"></td>
                     </tr>
                 <?php } ?>
             </tbody>
